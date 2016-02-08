@@ -18,15 +18,15 @@
 		console.trace(error);
 	});
 </pre>
-
+<p>Note: you dont have to set all params. In effect, invoking get(), post(), put() etc is the only thing you have to invoke</p>
 <h3>RestResource can be reused, for example</h3>
 <pre>
 	var url = "http://example.com/account/:accountId";
-	var resource = new RestResource(url, {accountId: 1});
+	var resource = new RestResource(url, {accountId: 1}); //path params initialized immidiately
 
 	resource.get().then((account)=>{
 		account.touchedAt = new Date();
 		return account;
-	}).then(resource.post); 			//same resource will be resused
+	}).then(resource.post); 							//same resource will be resused
 
 </pre>
