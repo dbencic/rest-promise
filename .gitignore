@@ -1,0 +1,14 @@
+node_modules/
+dist/client.dev.js
+.DS_Store
+npm-debug.log
+
+#IntelliJ IDEA project files
+.idea/
+*.ipr
+*.iml
+*.iws
+
+#Local files
+local/
+newrelic_agent.log

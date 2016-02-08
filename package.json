@@ -1,0 +1,30 @@
+{
+  "name": "rest-promise",
+  "version": "1.0.0",
+  "description": "Promise wrapper arround request library with rest style builder methods",
+  "main": "index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbencic/rest-promise.git"
+  },
+  "keywords": [
+    "rest",
+    "request",
+    "promise",
+    "http"
+  ],
+  "engines" : { 
+    "node" : ">4.0.0" 
+  },
+  "author": "dragan.bencic@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dbencic/rest-promise/issues"
+  },
+  "homepage": "https://github.com/dbencic/rest-promise#readme",
+  "dependencies": {
+    "request": "^2.69.0"
+  }
+}
