@@ -18,8 +18,13 @@ class RestResource {
 	 */
 	constructor(url, pathParams) {
 		this.url = aplyPathParams(url, pathParams || {});
-		this.callArgs = {};
+		this.__initCallArgs();
+	}
 
+	__initCallArgs() {
+		this.callArgs = {};
+		this.callArgs.cookies = {};
+		this.callArgs.headers = {};
 	}
 
 	//args building 
@@ -32,10 +37,21 @@ class RestResource {
 
 	endResponseOnError(res) {
 		this.callArgs.res = res;
+		return this;
+	}
+
+	cookie(name, value) {
+		this.callArgs.cookies[name] = value;
+		return this;
+	}
+
+	header(name, value) {
+		this.callArgs.headers[name] = value;
+		return this;
 	}
 
 	authToken(authToken) {
-		this.callArgs.authToken = authToken;
+		this.cookie("AuthToken", authToken);
 		return this;
 	}
 
@@ -86,7 +102,7 @@ class RestResource {
 			console.log(this.callArgs);
 		}
 		let url = this.callArgs.url || this.url;
-		let methodHasBody = this.hasBody(method);
+		let methodHasBody = this.__hasBody(method);
 		var options = {
 		  url: url,
 		  json: this.callArgs.json,
@@ -94,9 +110,7 @@ class RestResource {
 		  body: (methodHasBody)?this.callArgs.requestData:undefined,
 		  qs: (!methodHasBody)?this.callArgs.requestData:undefined,
 		  timeout: this.callArgs.timeout || 300000,
-		  headers: {
-		    'cookie': 'AuthToken=' + this.callArgs.authToken
-		  }
+		  headers: this._createHeaders()
 		};
 
 		let promise = new Promise((resolve, reject)=>{
@@ -115,11 +129,25 @@ class RestResource {
 				res.status(500).end(error.message);
 			});
 		}
-		this.callArgs = {};//resets call arguments
+		this.__initCallArgs();//resets call arguments
 		return promise;
 	}
 
-	hasBody(method) {
+	_createHeaders() {
+		let headers = this.callArgs.headers;
+		let cookies = Object.getOwnPropertyNames(this.callArgs.cookies).map((name)=>{
+			return name + "=" + this.callArgs.cookies[name];
+		});
+		let headerCookie = Object.getOwnPropertyNames(headers).find((propertyName)=>/^cookie$/i.test(propertyName));
+		if (headerCookie) {
+			cookies.push(headers[headerCookie]);
+			delete headers[headerCookie];
+		}
+		headers.Cookie = cookies.join("; ");
+		return headers;
+	}
+
+	__hasBody(method) {
 		return method=="POST" || method == "PUT" || method == "PATCH";
 	}
 

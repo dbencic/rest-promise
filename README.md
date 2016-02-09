@@ -1,5 +1,5 @@
 #Rest promise class
-ES6 Rest class for node **(not browser)**, wrapper arround request library with very basic functionalities
+ES6 Rest class for node **(not browser)**, wrapper arround request library with basic and more common used functionalities
 ##Example usage
 ```javascript
 var url = "http://example.com/account/:accountId/otherArg/:myOtherArg";
@@ -22,11 +22,26 @@ Note: you dont have to set all params. In effect, invoking get(), post(), put() 
 ###RestResource can be reused, for example
 ```javascript
 var url = "http://example.com/account/:accountId";
-var resource = new RestResource(url, {accountId: 1}); //path params initialized immidiately
+var resource = new RestResource(url, {accountId: 1}); //path params aplied immidiately and preserved for future use. 
+													  //If you use .pathParams() method after this it wont have anny effect
 
 resource.get().then((account)=>{
 	account.touchedAt = new Date();
 	return account;
-}).then(resource.post); 							//same resource will be resused
+}).then(resource.post).then(()=>{ 					//same resource will be resused
+	console.log("Account touch timestamp updated");
+}); 							
 
 ```
+###Heders and cookies
+Headers and cookies can be added following same builder method:
+```javascript
+var url = "http://example.com/account/:myPathParam";
+var resource = new RestResource(url, {myPathParam: "value"});
+resource.header("User-Agent", "My app").header("Accept", "text/plain").header("Content-Type", "application/json");
+resource.cookie("myCookie1", "myValueCookie1").cookie("myCookie2", "myCookieValue2");
+resource.get((page)=>{
+	console.log(page);
+});
+```
+Note: after every request you must rebuild parameters/headers again.
