@@ -2,6 +2,7 @@
 ES6 Rest class for node **(not browser)**, wrapper arround request library with basic and more common used functionalities
 ##Example usage
 ```javascript
+var RestResource = require("rest-promise");
 var url = "http://example.com/account/:accountId/otherArg/:myOtherArg";
 var resource = new RestResource(url);
 var restPromise = resource
@@ -21,6 +22,7 @@ restPromise.then((responseBody)=>{
 Note: you dont have to set all params. In effect, invoking get(), post(), put() etc is the only thing you have to invoke
 ###RestResource can be reused, for example
 ```javascript
+var RestResource = require("rest-promise");
 var url = "http://example.com/account/:accountId";
 var resource = new RestResource(url, {accountId: 1}); //path params aplied immidiately and preserved for future use. 
 													  //If you use .pathParams() method after this it wont have anny effect
@@ -36,6 +38,7 @@ resource.get().then((account)=>{
 ###Heders and cookies
 Headers and cookies can be added following same builder method:
 ```javascript
+var RestResource = require("rest-promise");
 var url = "http://example.com/account/:myPathParam";
 var resource = new RestResource(url, {myPathParam: "value"});
 resource.header("User-Agent", "My app").header("Accept", "text/plain").header("Content-Type", "application/json");
