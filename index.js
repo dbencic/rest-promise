@@ -107,7 +107,8 @@ class RestResource {
 		  url: url,
 		  json: this.callArgs.json,
 		  method: method,
-		  body: (methodHasBody)?this.callArgs.requestData:undefined,
+		  body: (methodHasBody && this.callArgs.json)?this.callArgs.requestData:undefined,
+		  form: (methodHasBody && !this.callArgs.json)?this.callArgs.requestData:undefined,
 		  qs: (!methodHasBody)?this.callArgs.requestData:undefined,
 		  timeout: this.callArgs.timeout || 300000,
 		  headers: this._createHeaders()
