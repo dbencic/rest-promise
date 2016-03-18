@@ -97,10 +97,6 @@ class RestResource {
 	 * execution function
 	 */
 	doRequest(method) {
-		if (this.callArgs.log) {
-			console.log("Executing method %s, on url:%s with args:", method, this.url);
-			console.log(this.callArgs);
-		}
 		let url = this.callArgs.url || this.url;
 		let methodHasBody = this.__hasBody(method);
 		var options = {
@@ -113,6 +109,10 @@ class RestResource {
 		  timeout: this.callArgs.timeout || 300000,
 		  headers: this._createHeaders()
 		};
+		if (this.callArgs.log) {
+			console.log("Request options:");
+			console.log(options);
+		}
 
 		let promise = new Promise((resolve, reject)=>{
 			request(options, function(error, response, body){
