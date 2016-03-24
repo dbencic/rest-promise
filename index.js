@@ -118,11 +118,11 @@ class RestResource {
 			request(options, function(error, response, body){
 				if (error) {
 					console.error("access to resource request failed with error:");
-					console.error(error);
+					console.error(error.stack);
 					reject(error);
 				}else if(response.statusCode >= 400) {
 					var error = new Error("Response Status Code " + response.statusCode + " considered as unsuccessfull.");
-					console.error(error);
+					console.error(error.stack);
 					reject(error);
 				}
 				else {
