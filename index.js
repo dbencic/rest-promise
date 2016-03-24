@@ -117,10 +117,15 @@ class RestResource {
 		let promise = new Promise((resolve, reject)=>{
 			request(options, function(error, response, body){
 				if (error) {
-					console.log("access to resource request failed with error:");
-					console.trace(error);
+					console.error("access to resource request failed with error:");
+					console.error(error);
 					reject(error);
-				}else {
+				}else if(response.statusCode >= 400) {
+					var error = new Error("Response Status Code " + response.statusCode + " considered as unsuccessfull.");
+					console.error(error);
+					reject(error);
+				}
+				else {
 					resolve(body);
 				}
 			});	
