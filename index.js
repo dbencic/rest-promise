@@ -75,7 +75,8 @@ class RestResource {
 		return this;
 	}
 
-	get() {
+	get(queryStringParams) {
+		if (queryStringParams) this.requestData(queryStringParams);
 		return this.doRequest("GET");
 	}
 
@@ -155,6 +156,19 @@ class RestResource {
 
 	__hasBody(method) {
 		return method=="POST" || method == "PUT" || method == "PATCH";
+	}
+
+	/**
+	 * for usage in catch, to avoid typing same stuff again and again
+	 */
+	static logAndRethrow(error) {
+		
+		if (error && error.stack) {
+			console.error(error.stack);
+		}else {
+			console.log(error);
+		}
+		throw error;
 	}
 
 }

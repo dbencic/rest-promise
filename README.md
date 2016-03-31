@@ -2,9 +2,9 @@
 ES6 Rest class for node **(not browser)**, wrapper arround request library with basic and more common used functionalities
 ##Example usage
 ```javascript
-var RestResource = require("rest-promise");
+var RestPromise = require("rest-promise");
 var url = "http://example.com/account/:accountId/otherArg/:myOtherArg";
-var resource = new RestResource(url);
+var resource = new RestPromise(url);
 var restPromise = resource
 	.pathParams({accountId: 1, myOtherArg: "argValue"})	//params that will be replaced in url insted of placeholders
 		.asJson() 										//data will be sent and interpreted as json
@@ -15,16 +15,14 @@ var restPromise = resource
 
 restPromise.then((responseBody)=>{
 	console.log(responseBody);
-}).catch((error)=>{
-	console.trace(error);
-});
+}).catch(RestPromise.logAndRethrow);
 ```
 Note: you dont have to set all params. In effect, invoking get(), post(), put() etc is the only thing you have to invoke
-###RestResource can be reused, for example
+###RestPromise can be reused, for example
 ```javascript
-var RestResource = require("rest-promise");
+var RestPromise = require("rest-promise");
 var url = "http://example.com/account/:accountId";
-var resource = new RestResource(url, {accountId: 1}); //path params aplied immidiately and preserved for future use. 
+var resource = new RestPromise(url, {accountId: 1}); //path params aplied immidiately and preserved for future use. 
 													  //If you use .pathParams() method after this it wont have anny effect
 
 resource.get().then((account)=>{
@@ -38,9 +36,9 @@ resource.get().then((account)=>{
 ###Heders and cookies
 Headers and cookies can be added following same builder method:
 ```javascript
-var RestResource = require("rest-promise");
+var RestPromise = require("rest-promise");
 var url = "http://example.com/account/:myPathParam";
-var resource = new RestResource(url, {myPathParam: "value"});
+var resource = new RestPromise(url, {myPathParam: "value"});
 resource.header("User-Agent", "My app").header("Accept", "text/plain").header("Content-Type", "application/json");
 resource.cookie("myCookie1", "myValueCookie1").cookie("myCookie2", "myCookieValue2");
 resource.get((page)=>{
@@ -48,3 +46,14 @@ resource.get((page)=>{
 });
 ```
 Note: after every request you must rebuild parameters/headers again.
+
+###Cathcing errors
+RestPromise class ships with one static method called 'logAndRethrow' which can be used as utility when catching errors. It simply logs error stack trace to console.error and then rethrows same error.
+sample usage:
+```javascript
+var RestPromise = require("rest-promise");
+var resource = new RestPromise(url);
+resource.asJson().get().then((result)=>{
+	console.log(result);
+}).catch(RestPromise.logAndRethrow);
+```
