@@ -65,6 +65,10 @@ class RestResource {
 		return this;
 	}
 
+	json() {
+		return this.asJson();
+	}
+
 	timeout(timeout) {
 		this.callArgs.timeout = timeout;
 		return this;
