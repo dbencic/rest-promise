@@ -5,7 +5,9 @@ var request = require("request");
  * aplies path params to URL and returns it
  */
 function aplyPathParams(url, pathParams) {
-	Object.getOwnPropertyNames(pathParams).forEach((key)=>{
+	let keys = Object.getOwnPropertyNames(pathParams);
+	keys.sort((k1, k2)=>(k2.length - k1.length));//sorts descending by length
+	keys.forEach((key)=>{
 		url = url.replace(":" + key, pathParams[key]);
 	});
 	return url;
