@@ -1,6 +1,6 @@
 {
   "name": "rest-promise",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Promise wrapper arround request library with rest style builder methods",
   "main": "index.js",
   "scripts": {

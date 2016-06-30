@@ -21,6 +21,7 @@ class RestResource {
 	constructor(url, pathParams) {
 		this.url = aplyPathParams(url, pathParams || {});
 		this.__initCallArgs();
+		this.callLog = [];
 	}
 
 	__initCallArgs() {
@@ -137,6 +138,7 @@ class RestResource {
 
 		let promise = new Promise((resolve, reject)=>{
 			request(options, function(error, response, body){
+				this.callLog.push({request: options, response: response});
 				if (error) {
 					console.error("access to resource request failed with error:");
 					console.error(error.stack);
