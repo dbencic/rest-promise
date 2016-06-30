@@ -5,7 +5,7 @@ var request = require("request");
  * aplies path params to URL and returns it
  */
 function aplyPathParams(url, pathParams) {
-	let keys = Object.getOwnPropertyNames(pathParams);
+	const keys = Object.getOwnPropertyNames(pathParams);
 	keys.sort((k1, k2)=>(k2.length - k1.length));//sorts descending by length
 	keys.forEach((key)=>{
 		url = url.replace(":" + key, pathParams[key]);
@@ -49,6 +49,12 @@ class RestResource {
 
 	header(name, value) {
 		this.callArgs.headers[name] = value;
+		return this;
+	}
+
+	basicAuth(username, password) {
+		this.authorizationHeader = 
+			"Basic " + new Buffer(username + ":" + password).toString("base64");
 		return this;
 	}
 
@@ -101,11 +107,11 @@ class RestResource {
 	}
 
 	/**
-	 * execution function
+	 * returns opions for desired operation
 	 */
-	doRequest(method) {
-		let url = this.callArgs.url || this.url;
-		let methodHasBody = this.__hasBody(method);
+	getOptions(method) {
+		const url = this.callArgs.url || this.url;
+		const methodHasBody = this.__hasBody(method);
 		var options = {
 		  url: url,
 		  json: this.callArgs.json,
@@ -116,6 +122,14 @@ class RestResource {
 		  timeout: this.callArgs.timeout || 300000,
 		  headers: this._createHeaders()
 		};
+		return options;
+	}
+
+	/**
+	 * execution function
+	 */
+	doRequest(method) {
+		var options = this.getOptions(method);
 		if (this.callArgs.log) {
 			console.log("Request options:");
 			console.log(options);
@@ -139,7 +153,7 @@ class RestResource {
 		});
 		if (this.callArgs.res) {
 			promise = promise.catch((error)=>{
-				res.status(500).end(error.message);
+				this.callArgs.res.status(500).end(error.message);
 			});
 		}
 		this.__initCallArgs();//resets call arguments
@@ -147,16 +161,19 @@ class RestResource {
 	}
 
 	_createHeaders() {
-		let headers = this.callArgs.headers;
-		let cookies = Object.getOwnPropertyNames(this.callArgs.cookies).map((name)=>{
+		const headers = this.callArgs.headers;
+		const cookies = Object.getOwnPropertyNames(this.callArgs.cookies).map((name)=>{
 			return name + "=" + this.callArgs.cookies[name];
 		});
-		let headerCookie = Object.getOwnPropertyNames(headers).find((propertyName)=>/^cookie$/i.test(propertyName));
+		const headerCookie = Object.getOwnPropertyNames(headers).find((propertyName)=>/^cookie$/i.test(propertyName));
 		if (headerCookie) {
 			cookies.push(headers[headerCookie]);
 			delete headers[headerCookie];
 		}
 		headers.Cookie = cookies.join("; ");
+		if (this.authorizationHeader) {
+			headers["Authorization"] = this.authorizationHeader;
+		}
 		return headers;
 	}
 

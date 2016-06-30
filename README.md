@@ -47,6 +47,16 @@ resource.get((page)=>{
 ```
 Note: after every request you must rebuild parameters/headers again.
 
+###Basic authentication
+Can be added via basicAuth builder method:
+```javascript
+var RestPromise = require("rest-promise");
+var url = "http://example.com/account/:myPathParam";
+var resource = new RestPromise(url, {myPathParam: "value"});
+resource.basicAuth("someUser", "somePass").get((page)=>console.log(page));
+```
+Note: auth header is saved in rest promise instance, so as long you are using same instance you dont need to set it again.
+
 ###Cathcing errors
 RestPromise class ships with one static method called 'logAndRethrow' which can be used as utility when catching errors. It simply logs error stack trace to console.error and then rethrows same error.
 sample usage:
