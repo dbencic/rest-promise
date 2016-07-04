@@ -17,11 +17,15 @@ function aplyPathParams(url, pathParams) {
 class RestResource {
 	/**
 	 * @param url url arround which rest method will be invoked
+	 * @path params: optional, key value pairs, ex {accountId: 11}
+	 * requestPostprocessor: optional process things after request is executed. If present
+	 * after response returns it will be invoked as follows
+	 * this.requestPostprocessor(requestOptions, {error: error, response: response, body: body});
 	 */
-	constructor(url, pathParams) {
+	constructor(url, pathParams, requestPostprocessor) {
 		this.url = aplyPathParams(url, pathParams || {});
 		this.__initCallArgs();
-		this.callLog = [];
+		this.requestPostprocessor = requestPostprocessor;
 	}
 
 	__initCallArgs() {
@@ -138,7 +142,13 @@ class RestResource {
 
 		let promise = new Promise((resolve, reject)=>{
 			request(options, function(error, response, body){
-				this.callLog.push({request: options, response: response});
+				if (this.requestPostprocessor) {
+					this.requestPostprocessor(options, {
+						response: response, 
+						body: body,
+						error: error
+					});
+				}
 				if (error) {
 					console.error("access to resource request failed with error:");
 					console.error(error.stack);
