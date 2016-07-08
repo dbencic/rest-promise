@@ -5,206 +5,194 @@ var request = require("request");
  * aplies path params to URL and returns it
  */
 function aplyPathParams(url, pathParams) {
-	const keys = Object.getOwnPropertyNames(pathParams);
-	keys.sort((k1, k2)=>(k2.length - k1.length));//sorts descending by length
-	keys.forEach((key)=>{
-		url = url.replace(":" + key, pathParams[key]);
-	});
-	return url;
+    const keys = Object.getOwnPropertyNames(pathParams);
+    keys.sort((k1, k2) => (k2.length - k1.length)); //sorts descending by length
+    keys.forEach((key) => {
+        url = url.replace(":" + key, pathParams[key]);
+    });
+    return url;
 }
 
 //RestResource
 class RestResource {
-	/**
-	 * @param url url arround which rest method will be invoked
-	 * @path params: optional, key value pairs, ex {accountId: 11}
-	 * requestPostprocessor: optional process things after request is executed. If present
-	 * after response returns it will be invoked as follows
-	 * this.requestPostprocessor(requestOptions, {error: error, response: response, body: body});
-	 */
-	constructor(url, pathParams, requestPostprocessor) {
-		this.url = aplyPathParams(url, pathParams || {});
-		this.__initCallArgs();
-		this.requestPostprocessor = requestPostprocessor;
-	}
+    /**
+     * @param url url arround which rest method will be invoked
+     */
+    constructor(url, pathParams, requestPostprocessor) {
+        this.url = aplyPathParams(url, pathParams || {});
+        this.__initCallArgs();
+        this.callLog = [];
+        this.requestPostprocessor = requestPostprocessor;
+    }
 
-	__initCallArgs() {
-		this.callArgs = {};
-		this.callArgs.cookies = {};
-		this.callArgs.headers = {};
-	}
+    __initCallArgs() {
+        this.callArgs = {};
+        this.callArgs.cookies = {};
+        this.callArgs.headers = {};
+    }
 
-	//args building 
-	pathParams(pathParams) {
-		pathParams = pathParams || {};
-		this.callArgs.pathParams = pathParams;
-		this.callArgs.url = aplyPathParams(this.url, pathParams);
-		return this;
-	}
+    //args building 
+    pathParams(pathParams) {
+        pathParams = pathParams || {};
+        this.callArgs.pathParams = pathParams;
+        this.callArgs.url = aplyPathParams(this.url, pathParams);
+        return this;
+    }
 
-	endResponseOnError(res) {
-		this.callArgs.res = res;
-		return this;
-	}
+    cookie(name, value) {
+        this.callArgs.cookies[name] = value;
+        return this;
+    }
 
-	cookie(name, value) {
-		this.callArgs.cookies[name] = value;
-		return this;
-	}
+    header(name, value) {
+        this.callArgs.headers[name] = value;
+        return this;
+    }
 
-	header(name, value) {
-		this.callArgs.headers[name] = value;
-		return this;
-	}
+    basicAuth(username, password) {
+        this.authorizationHeader =
+            "Basic " + new Buffer(username + ":" + password).toString("base64");
+        return this;
+    }
 
-	basicAuth(username, password) {
-		this.authorizationHeader = 
-			"Basic " + new Buffer(username + ":" + password).toString("base64");
-		return this;
-	}
+    authToken(authToken) {
+        this.cookie("AuthToken", authToken);
+        return this;
+    }
 
-	authToken(authToken) {
-		this.cookie("AuthToken", authToken);
-		return this;
-	}
+    requestData(requestData) {
+        this.callArgs.requestData = requestData;
+        return this;
+    }
 
-	requestData(requestData) {
-		this.callArgs.requestData = requestData;
-		return this;
-	}
+    asJson() {
+        this.callArgs.json = true;
+        return this;
+    }
 
-	asJson() {
-		this.callArgs.json = true;
-		return this;
-	}
+    json() {
+        return this.asJson();
+    }
 
-	json() {
-		return this.asJson();
-	}
+    timeout(timeout) {
+        this.callArgs.timeout = timeout;
+        return this;
+    }
 
-	timeout(timeout) {
-		this.callArgs.timeout = timeout;
-		return this;
-	}
+    log() {
+        this.callArgs.log = true;
+        return this;
+    }
 
-	log() {
-		this.callArgs.log = true;
-		return this;
-	}
+    get(queryStringParams) {
+        if (queryStringParams) this.requestData(queryStringParams);
+        return this._promisedRequest("GET");
+    }
 
-	get(queryStringParams) {
-		if (queryStringParams) this.requestData(queryStringParams);
-		return this.doRequest("GET");
-	}
+    post(requestData) {
+        if (requestData) this.requestData(requestData);
+        return this._promisedRequest("POST");
+    }
 
-	post(requestData) {
-		if (requestData) this.requestData(requestData);
-		return this.doRequest("POST");
-	}
+    put(requestData) {
+        if (requestData) this.requestData(requestData);
+        return this._promisedRequest("PUT");
+    }
 
-	put(requestData) {
-		if (requestData) this.requestData(requestData);
-		return this.doRequest("PUT");
-	}
+    delete() {
+        return this._promisedRequest("DELETE");
+    }
 
-	delete() {
-		return this.doRequest("DELETE");
-	}
+    /**
+     * returns opions for desired operation
+     */
+    getOptions(method) {
+        const url = this.callArgs.url || this.url;
+        const methodHasBody = this.__hasBody(method);
+        var options = {
+            url: url,
+            json: this.callArgs.json,
+            method: method,
+            body: (methodHasBody && this.callArgs.json) ? this.callArgs.requestData : undefined,
+            form: (methodHasBody && !this.callArgs.json) ? this.callArgs.requestData : undefined,
+            qs: (!methodHasBody) ? this.callArgs.requestData : undefined,
+            timeout: this.callArgs.timeout || 300000,
+            headers: this._createHeaders()
+        };
+        return options;
+    }
 
-	/**
-	 * returns opions for desired operation
-	 */
-	getOptions(method) {
-		const url = this.callArgs.url || this.url;
-		const methodHasBody = this.__hasBody(method);
-		var options = {
-		  url: url,
-		  json: this.callArgs.json,
-		  method: method,
-		  body: (methodHasBody && this.callArgs.json)?this.callArgs.requestData:undefined,
-		  form: (methodHasBody && !this.callArgs.json)?this.callArgs.requestData:undefined,
-		  qs: (!methodHasBody)?this.callArgs.requestData:undefined,
-		  timeout: this.callArgs.timeout || 300000,
-		  headers: this._createHeaders()
-		};
-		return options;
-	}
+    /**
+     * execution function
+     */
+    _promisedRequest(method) {
+        return new Promise((resolve, reject) => {
+            this.doRequest(method, (error, body)=>{
+                if (error) reject(error);
+                else resolve(body);
+            });
+        });
+    }
 
-	/**
-	 * execution function
-	 */
-	doRequest(method) {
-		var options = this.getOptions(method);
-		if (this.callArgs.log) {
-			console.log("Request options:");
-			console.log(options);
-		}
+    doRequest(method, callbackWithErrorAndBodyArgs) {
+        var options = this.getOptions(method);
+        if (this.callArgs.log) {
+            console.log("Request options:");
+            console.log(options);
+        }
+        request(options, function(error, response, body) {
+            if (this.requestPostprocessor) {
+                this.requestPostprocessor(options, {
+                    response: response,
+                    body: body,
+                    error: error
+                });
+            }
+            if (error) {
+                console.error("access to resource request failed with error:");
+                console.error(error.stack);
+            } else if (response.statusCode >= 400) {
+                var error = new Error("Response Status Code " + response.statusCode + " considered as unsuccessfull.");
+                console.error(error.stack);
+            }
+            callbackWithErrorAndBodyArgs(error, body);
+        });
+        this.__initCallArgs(); //resets call arguments
+    }
 
-		let promise = new Promise((resolve, reject)=>{
-			request(options, function(error, response, body){
-				if (this.requestPostprocessor) {
-					this.requestPostprocessor(options, {
-						response: response, 
-						body: body,
-						error: error
-					});
-				}
-				if (error) {
-					console.error("access to resource request failed with error:");
-					console.error(error.stack);
-					reject(error);
-				}else if(response.statusCode >= 400) {
-					var error = new Error("Response Status Code " + response.statusCode + " considered as unsuccessfull.");
-					console.error(error.stack);
-					reject(error);
-				}
-				else {
-					resolve(body);
-				}
-			});	
-		});
-		if (this.callArgs.res) {
-			promise = promise.catch((error)=>{
-				this.callArgs.res.status(500).end(error.message);
-			});
-		}
-		this.__initCallArgs();//resets call arguments
-		return promise;
-	}
+    _createHeaders() {
+        const headers = this.callArgs.headers;
+        const cookies = Object.getOwnPropertyNames(this.callArgs.cookies).map((name) => {
+            return name + "=" + this.callArgs.cookies[name];
+        });
+        const headerCookie = Object.getOwnPropertyNames(headers).find((propertyName) => /^cookie$/i.test(propertyName));
+        if (headerCookie) {
+            cookies.push(headers[headerCookie]);
+            delete headers[headerCookie];
+        }
+        headers.Cookie = cookies.join("; ");
+        if (this.authorizationHeader) {
+            headers["Authorization"] = this.authorizationHeader;
+        }
+        return headers;
+    }
 
-	_createHeaders() {
-		const headers = this.callArgs.headers;
-		const cookies = Object.getOwnPropertyNames(this.callArgs.cookies).map((name)=>{
-			return name + "=" + this.callArgs.cookies[name];
-		});
-		const headerCookie = Object.getOwnPropertyNames(headers).find((propertyName)=>/^cookie$/i.test(propertyName));
-		if (headerCookie) {
-			cookies.push(headers[headerCookie]);
-			delete headers[headerCookie];
-		}
-		headers.Cookie = cookies.join("; ");
-		if (this.authorizationHeader) {
-			headers["Authorization"] = this.authorizationHeader;
-		}
-		return headers;
-	}
+    __hasBody(method) {
+        return method == "POST" || method == "PUT" || method == "PATCH";
+    }
 
-	__hasBody(method) {
-		return method=="POST" || method == "PUT" || method == "PATCH";
-	}
+    /**
+     * for usage in catch, to avoid typing same stuff again and again
+     */
+    static logAndRethrow(error) {
 
-	/**
-	 * for usage in catch, to avoid typing same stuff again and again
-	 */
-	static logAndRethrow(error) {
-		
-		if (error && error.stack) {
-			console.error(error.stack);
-		}else {
-			console.log(error);
-		}
-		throw error;
-	}
+        if (error && error.stack) {
+            console.error(error.stack);
+        } else {
+            console.log(error);
+        }
+        throw error;
+    }
 
 }
 
