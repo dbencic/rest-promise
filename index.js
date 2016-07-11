@@ -86,21 +86,21 @@ class RestResource {
 
     get(queryStringParams) {
         if (queryStringParams) this.requestData(queryStringParams);
-        return this._promisedRequest("GET");
+        return this.fetch("GET");
     }
 
     post(requestData) {
         if (requestData) this.requestData(requestData);
-        return this._promisedRequest("POST");
+        return this.fetch("POST");
     }
 
     put(requestData) {
         if (requestData) this.requestData(requestData);
-        return this._promisedRequest("PUT");
+        return this.fetch("PUT");
     }
 
     delete() {
-        return this._promisedRequest("DELETE");
+        return this.fetch("DELETE");
     }
 
     /**
@@ -125,16 +125,19 @@ class RestResource {
     /**
      * execution function
      */
-    _promisedRequest(method) {
+    fetch(method, callbackWithErrorAndBodyArgs) {
         return new Promise((resolve, reject) => {
-            this.doRequest(method, (error, body)=>{
+            this._doRequest(method, (error, body)=>{
                 if (error) reject(error);
                 else resolve(body);
+                if (callbackWithErrorAndBodyArgs) {
+                    callbackWithErrorAndBodyArgs(error, body);
+                }
             });
         });
     }
 
-    doRequest(method, callbackWithErrorAndBodyArgs) {
+    _doRequest(method, callbackWithErrorAndBodyArgs) {
         var options = this.getOptions(method);
         if (this.callArgs.log) {
             console.log("Request options:");
