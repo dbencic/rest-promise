@@ -155,7 +155,8 @@ class RestResource {
                 console.error("access to resource request failed with error:");
                 console.error(error.stack);
             } else if (response.statusCode >= 400) {
-                var error = new Error("Response Status Code " + response.statusCode + " considered as unsuccessfull.");
+                var error = new Error("Response Status Code " + response.statusCode + " considered as unsuccessfull. URL: "
+                    + options.url + " [" + options.method + "]");
                 console.error(error.stack);
             }
             callbackWithErrorAndBodyArgs(error, body);

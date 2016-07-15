@@ -1,6 +1,6 @@
 {
   "name": "rest-promise",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Promise wrapper arround request library with rest style builder methods",
   "main": "index.js",
   "scripts": {
@@ -25,6 +25,6 @@
   },
   "homepage": "https://github.com/dbencic/rest-promise#readme",
   "dependencies": {
-    "request": "^2.72.0"
+    "request": "^2.73.0"
   }
 }
