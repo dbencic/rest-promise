@@ -130,7 +130,7 @@ class RestResource {
             this._doRequest(method, (error, body)=>{
                 if (error) reject(error);
                 else resolve(body);
-                if (callbackWithErrorAndBodyArgs) {
+                if (callbackWithErrorAndBodyArgs && (callbackWithErrorAndBodyArgs instanceof Function)) {
                     callbackWithErrorAndBodyArgs(error, body);
                 }
             });
@@ -157,6 +157,8 @@ class RestResource {
             } else if (response.statusCode >= 400) {
                 var error = new Error("Response Status Code " + response.statusCode + " considered as unsuccessfull. URL: "
                     + options.url + " [" + options.method + "]");
+                console.error("Error calling url '%s'[%s]. Used options:", options.url, options.method);
+                console.error(options);
                 console.error(error.stack);
             }
             callbackWithErrorAndBodyArgs(error, body);
