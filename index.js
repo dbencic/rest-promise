@@ -17,12 +17,12 @@ function aplyPathParams(url, pathParams) {
 class RestResource {
     /**
      * @param url url arround which rest method will be invoked
+     * @param pathParams params in path name-value pairs
      */
-    constructor(url, pathParams, requestPostprocessor) {
+    constructor(url, pathParams) {
         this.url = aplyPathParams(url, pathParams || {});
         this.__initCallArgs();
         this.callLog = [];
-        this.requestPostprocessor = requestPostprocessor;
     }
 
     __initCallArgs() {
@@ -144,13 +144,6 @@ class RestResource {
             console.log(options);
         }
         request(options, function(error, response, body) {
-            if (this.requestPostprocessor) {
-                this.requestPostprocessor(options, {
-                    response: response,
-                    body: body,
-                    error: error
-                });
-            }
             if (error) {
                 console.error("access to resource request failed with error:");
                 console.error(error.stack);
