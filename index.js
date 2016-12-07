@@ -20,8 +20,10 @@ class RestResource {
      * @param pathParams params in path name-value pairs
      */
     constructor(url, pathParams) {
-        this.url = aplyPathParams(url, pathParams || {});
+        if (!url) throw new Error("url (first param) is mandatory");
         this.__initCallArgs();
+        this.callArgs.pathParams = pathParams || {};
+        this.url = aplyPathParams(url, this.callArgs.pathParams);
         this.callLog = [];
     }
 
@@ -139,9 +141,11 @@ class RestResource {
 
     _doRequest(method, callbackWithErrorAndBodyArgs) {
         var options = this.getOptions(method);
+        var logOptions = Object.assign({}, options);
+        logOptions.pathParams = this.callArgs.pathParams;
         if (this.callArgs.log) {
             console.log("Request options:");
-            console.log(options);
+            console.log(logOptions);
         }
         request(options, function(error, response, body) {
             if (error) {
@@ -151,7 +155,7 @@ class RestResource {
                 var error = new Error("Response Status Code " + response.statusCode + " considered as unsuccessfull. URL: "
                     + options.url + " [" + options.method + "]");
                 console.error("Error calling url '%s'[%s]. Used options:", options.url, options.method);
-                console.error(options);
+                console.error(logOptions);
                 console.error(error.stack);
             }
             callbackWithErrorAndBodyArgs(error, body);
