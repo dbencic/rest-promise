@@ -156,6 +156,7 @@ class RestResource {
                     + options.url + " [" + options.method + "]");
                 console.error("Error calling url '%s'[%s]. Used options:", options.url, options.method);
                 console.error(logOptions);
+                console.error("Response body is: ", body);
                 console.error(error.stack);
             }
             callbackWithErrorAndBodyArgs(error, body);
