@@ -67,6 +67,11 @@ class RestResource {
         return this;
     }
 
+    bodyType(type) {//raw or form
+        this.callArgs.bodyType = type;
+        return this;
+    }
+
     asJson() {
         this.callArgs.json = true;
         return this;
@@ -111,12 +116,18 @@ class RestResource {
     getOptions(method) {
         const url = this.callArgs.url || this.url;
         const methodHasBody = this.__hasBody(method);
+        let isForm = true;
+        if (this.callArgs.bodyType && this.callArgs.bodyType.toLowerCase() === "raw") {
+            isForm = false;
+        }else if(!this.callArgs.bodyType) {
+            isForm = !this.callArgs.json;
+        }
         var options = {
             url: url,
             json: this.callArgs.json,
             method: method,
-            body: (methodHasBody && this.callArgs.json) ? this.callArgs.requestData : undefined,
-            form: (methodHasBody && !this.callArgs.json) ? this.callArgs.requestData : undefined,
+            body: (methodHasBody && !isForm) ? this.callArgs.requestData : undefined,
+            form: (methodHasBody && isForm) ? this.callArgs.requestData : undefined,
             qs: (!methodHasBody) ? this.callArgs.requestData : undefined,
             timeout: this.callArgs.timeout || 300000,
             headers: this._createHeaders()
@@ -128,8 +139,9 @@ class RestResource {
      * execution function
      */
     fetch(method, callbackWithErrorAndBodyArgs) {
+        var tracingError = new Error();
         return new Promise((resolve, reject) => {
-            this._doRequest(method, (error, body)=>{
+            this._doRequest(method, tracingError, (error, body)=>{
                 if (error) reject(error);
                 else resolve(body);
                 if (callbackWithErrorAndBodyArgs && (callbackWithErrorAndBodyArgs instanceof Function)) {
@@ -139,7 +151,7 @@ class RestResource {
         });
     }
 
-    _doRequest(method, callbackWithErrorAndBodyArgs) {
+    _doRequest(method, tracingError, callbackWithErrorAndBodyArgs) {
         var options = this.getOptions(method);
         var logOptions = Object.assign({}, options);
         logOptions.pathParams = this.callArgs.pathParams;
@@ -149,8 +161,10 @@ class RestResource {
         }
         request(options, function(error, response, body) {
             if (error) {
-                console.error("access to resource request failed with error:");
-                console.error(error.stack);
+                console.error("Rest promise: access to resource request failed with error:");
+                console.error("Following error hapened here: ", tracingError.stack);
+                console.error("Because of: ", error.stack);
+                console.error("With args: ", logOptions);
             } else if (response.statusCode >= 400) {
                 var error = new Error("Response Status Code " + response.statusCode + " considered as unsuccessfull. URL: "
                     + options.url + " [" + options.method + "]");
